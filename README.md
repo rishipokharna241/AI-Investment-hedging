@@ -18,10 +18,10 @@ To have GitHub trigger deployments to your existing Render service:
 1. In Render, open your web service and create a **Deploy Hook** from its settings. Copy the hook URL.
 2. In GitHub, open **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
 3. Name the secret `RENDER_DEPLOY_HOOK_URL`, paste the URL, and save it. Do not commit the URL to the repository.
-4. In Render, disable automatic deploys for pushes to the connected branch to avoid deploying twice.
-5. Push a commit to `main`, or go to GitHub **Actions** and run **Deploy to Render** manually.
+4. Choose one deployment trigger: use Render's automatic deploys for pushes, or disable automatic deploys in Render and use this GitHub Actions workflow. Using both can deploy twice.
+5. To use GitHub Actions, push a commit to `main`, or go to GitHub **Actions** and run **Deploy to Render** manually.
 
-The workflow in [`.github/workflows/deploy-render.yml`](./.github/workflows/deploy-render.yml) triggers Render; the Blueprint in [`render.yaml`](./render.yaml) specifies how Render builds and runs the service. The health check at `/api/health` confirms that the server is responding.
+The workflow in [`.github/workflows/deploy-render.yml`](./.github/workflows/deploy-render.yml) triggers Render when `RENDER_DEPLOY_HOOK_URL` is configured. If the secret is missing, push-triggered runs warn and skip the GitHub-triggered deploy; enable Render automatic deploys instead, or add the secret. Manual deployments require the secret. The Blueprint in [`render.yaml`](./render.yaml) specifies how Render builds and runs the service. The health check at `/api/health` confirms that the server is responding.
 
 ## Run locally
 
