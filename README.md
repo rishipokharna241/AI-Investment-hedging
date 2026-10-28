@@ -11,7 +11,17 @@ The repository includes a Render Blueprint in [`render.yaml`](./render.yaml), so
 3. Review the service settings from `render.yaml` and choose **Apply**.
 4. When the deployment finishes, open the public `onrender.com` URL shown on the service page.
 
-Render deploys updates pushed to the connected branch. The health check at `/api/health` confirms that the server is responding.
+### Deploy from GitHub Actions
+
+To have GitHub trigger deployments to your existing Render service:
+
+1. In Render, open your web service and create a **Deploy Hook** from its settings. Copy the hook URL.
+2. In GitHub, open **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+3. Name the secret `RENDER_DEPLOY_HOOK_URL`, paste the URL, and save it. Do not commit the URL to the repository.
+4. In Render, disable automatic deploys for pushes to the connected branch to avoid deploying twice.
+5. Push a commit to `main`, or go to GitHub **Actions** and run **Deploy to Render** manually.
+
+The workflow in [`.github/workflows/deploy-render.yml`](./.github/workflows/deploy-render.yml) triggers Render; the Blueprint in [`render.yaml`](./render.yaml) specifies how Render builds and runs the service. The health check at `/api/health` confirms that the server is responding.
 
 ## Run locally
 
