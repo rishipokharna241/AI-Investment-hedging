@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COMEX vs MCX Pro Terminal — Live Arbitrage, AutoTrader & AI Chat</title>
+  <meta name="description" content="Real-time COMEX to MCX Fair Value Calculator, AutoTrader, Forex Factory Calendar, and AI Chatbot for Gold, Silver, Copper, and Crude Oil.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css?v=20261028-1">
+</head>
+<body>
+<div class="app-container">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="terminal-header">
+    <div class="header-left">
+      <div class="logo">
+        <i class="fa-solid fa-chart-line logo-icon"></i>
+        <span class="logo-title">COMEX<span class="hl-cyan">2</span>MCX</span>
+        <span class="logo-badge">PRO TERMINAL</span>
+      </div>
+      <div class="market-status-bar">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">CONNECTING...</span>
+      </div>
+    </div>
+
+    <div class="header-pills">
+      <div class="hpill"><span class="hpill-label">USD/INR</span><span class="hpill-val" id="usdinr-rate-display">₹83.45</span></div>
+      <div class="hpill"><span class="hpill-label">Duty</span><span class="hpill-val hl-gold" id="header-duty-display">15% BCD</span></div>
+      <div class="hpill at-pill"><span class="hpill-label">AutoTrader</span><span class="hpill-val" id="at-status-label">OFF</span><span class="hpill-sep">|</span><span class="hpill-val" id="at-pnl-header">₹0</span></div>
+      <div class="hpill ff-pill"><span class="hpill-label">Next Event</span><span class="hpill-val" id="ff-header-event">Scanning…</span><span class="hpill-sep">|</span><span class="hpill-val ff-timer" id="ff-header-timer">--:--:--</span></div>
+    </div>
+
+    <div class="header-right">
+      <button class="btn btn-outline" id="btn-audio-toggle" title="Sound Alerts">
+        <i class="fa-solid fa-volume-xmark" id="audio-icon"></i>
+      </button>
+      <button class="btn btn-primary" id="btn-open-settings">
+        <i class="fa-solid fa-sliders"></i> Config
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================== GLOBAL TAB NAV ===================== -->
+  <nav class="tab-nav">
+    <button class="tab-nav-btn active" data-tab="dashboard">
+      <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </button>
+    <button class="tab-nav-btn" data-tab="forex">
+      <i class="fa-solid fa-calendar-days"></i> Forex Factory
+      <span class="tab-badge-pill" id="ff-tab-badge">—</span>
+    </button>
+    <button class="tab-nav-btn" data-tab="autotrader">
+      <i class="fa-solid fa-robot"></i> AutoTrader
+      <span class="tab-badge-pill" id="at-tab-badge">OFF</span>
+    </button>
+    <button class="tab-nav-btn" data-tab="chatbot">
+      <i class="fa-solid fa-comments"></i> Chatbot Chat
+    </button>
+  </nav>
+
+  <!-- ===================== COMMODITY SUB-TABS ===================== -->
+  <div class="commodity-nav">
+    <button class="nav-tab active" data-commodity="gold">
+      <i class="fa-solid fa-coins gold-icon"></i>
+      <div class="tab-info"><span class="tab-name">GOLD (10g)</span><span class="tab-price" id="tab-price-gold">—</span></div>
+      <span class="tab-spread" id="tab-spread-gold">—</span>
+    </button>
+    <button class="nav-tab" data-commodity="silver">
+      <i class="fa-solid fa-cube silver-icon"></i>
+      <div class="tab-info"><span class="tab-name">SILVER (1kg)</span><span class="tab-price" id="tab-price-silver">—</span></div>
+      <span class="tab-spread" id="tab-spread-silver">—</span>
+    </button>
+    <button class="nav-tab" data-commodity="copper">
+      <i class="fa-solid fa-bolt copper-icon"></i>
+      <div class="tab-info"><span class="tab-name">COPPER (1kg)</span><span class="tab-price" id="tab-price-copper">—</span></div>
+      <span class="tab-spread" id="tab-spread-copper">—</span>
+    </button>
+    <button class="nav-tab" data-commodity="crude">
+      <i class="fa-solid fa-droplet crude-icon"></i>
+      <div class="tab-info"><span class="tab-name">CRUDE OIL (Bbl)</span><span class="tab-price" id="tab-price-crude">—</span></div>
+      <span class="tab-spread" id="tab-spread-crude">—</span>
+    </button>
+  </div>
+
+  <!-- ========================= TAB PANELS ========================= -->
+
+  <!-- ===== TAB 1: DASHBOARD ===== -->
+  <div class="tab-panel active" id="tab-dashboard">
+    <div class="dash-body">
+
+      <!-- 4 Metric Cards -->
+      <div class="cards-grid">
+        <!-- COMEX Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-globe"></i> COMEX International</div>
+            <span class="badge-cyan" id="comex-symbol-tag">GC=F</span>
+          </div>
+          <div class="stat-main">
+            <span class="stat-currency">$</span>
+            <span class="stat-huge" id="comex-price-val">—</span>
+            <span class="stat-unit" id="comex-unit-val">/ oz</span>
+          </div>
+          <div class="stat-sub-row">
+            <span class="change-tag" id="comex-change-val">—</span>
+            <span class="update-time" id="comex-last-update">Syncing...</span>
+          </div>
+          <div class="divider"></div>
+          <div class="breakdown-list">
+            <div class="bl-row"><span>Unit Conversion</span><span id="comex-conversion-info">1 oz = 31.10 g</span></div>
+            <div class="bl-row"><span>USD / Gram</span><span id="comex-gram-usd">—</span></div>
+            <div class="bl-row accent-cyan"><span>Base Landing (Pre-Tax)</span><span id="comex-base-inr">—</span></div>
+          </div>
+        </div>
+
+        <!-- Fair Value Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-calculator"></i> Fair Import Parity</div>
+            <span class="badge-gold" id="card-tax-summary-badge">+15% BCD</span>
+          </div>
+          <div class="stat-main">
+            <span class="stat-currency">₹</span>
+            <span class="stat-huge hl-gold" id="fair-value-val">—</span>
+            <span class="stat-unit" id="fair-unit-val">/ 10g</span>
+          </div>
+          <div class="stat-sub-row"><span class="label-sub">Import Parity · Futures · Pre-GST</span></div>
+          <div class="divider"></div>
+          <div class="breakdown-list">
+            <div class="bl-row"><span>Base Price (INR)</span><span id="tax-base-price">—</span></div>
+            <div class="bl-row"><span>BCD Duty (<span id="disp-duty-pct">15.0</span>%)</span><span class="hl-yellow" id="tax-duty-amt">—</span></div>
+            <div class="bl-row"><span>GST (<span id="disp-gst-pct">3.0</span>%)</span><span class="hl-muted" id="tax-gst-amt">Excl.</span></div>
+            <div class="bl-row"><span>Freight</span><span id="tax-freight-amt">—</span></div>
+          </div>
+        </div>
+
+        <!-- MCX Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-building-columns"></i> MCX Domestic Price</div>
+            <span class="badge-cyan" id="mcx-contract-tag">GOLD (AUG)</span>
+          </div>
+          <div class="stat-main">
+            <span class="stat-currency">₹</span>
+            <span class="stat-huge" id="mcx-price-val">—</span>
+            <span class="stat-unit" id="mcx-unit-val">/ 10g</span>
+          </div>
+          <div class="stat-sub-row">
+            <span class="change-tag" id="mcx-change-val">—</span>
+            <span class="update-time" id="mcx-last-update">Syncing...</span>
+          </div>
+          <div class="divider"></div>
+          <div class="breakdown-list">
+            <div class="bl-row"><span>Day Range</span><span id="mcx-day-range">—</span></div>
+            <div class="bl-row"><span>Open / Prev Close</span><span id="mcx-open-close">—</span></div>
+            <div class="bl-row"><span>vs Fair Parity</span><span class="fw-bold" id="mcx-diff-amt">—</span></div>
+          </div>
+        </div>
+
+        <!-- Arbitrage Signal Card -->
+        <div class="card arb-card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-bolt-lightning"></i> Arbitrage Signal</div>
+            <span class="pulse-dot" id="arbitrage-pulse"></span>
+          </div>
+          <div class="signal-box neutral-signal" id="signal-box">
+            <div class="signal-title" id="signal-title">AWAITING DATA</div>
+            <div class="signal-action" id="signal-action">Fetching live prices…</div>
+          </div>
+          <div class="arb-metrics">
+            <div class="arb-metric"><span class="am-label">Spread (₹)</span><span class="am-val" id="arb-spread-inr">—</span></div>
+            <div class="arb-metric"><span class="am-label">Spread (%)</span><span class="am-val" id="arb-spread-pct">—</span></div>
+            <div class="arb-metric"><span class="am-label">Lot Return</span><span class="am-val hl-green" id="arb-est-profit">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart + Calculator Row -->
+      <div class="middle-grid">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h3 class="chart-title" id="chart-main-title">Live MCX vs COMEX Fair Parity</h3>
+              <span class="chart-subtitle">Yahoo Finance · Real-Time Feed</span>
+            </div>
+            <div class="chart-controls">
+              <button class="tf-btn active" data-tf="1M">1M</button>
+              <button class="tf-btn" data-tf="5M">5M</button>
+              <button class="tf-btn" data-tf="1H">1H</button>
+              <button class="btn-icon" id="btn-refresh-chart"><i class="fa-solid fa-arrows-rotate"></i></button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="arbitrageChart"></canvas></div>
+        </div>
+
+        <div class="card calc-card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-coins"></i> Lot Profit Calculator</div>
+          </div>
+          <div class="calc-body">
+            <div class="form-group">
+              <label>Trade Quantity / Lot Size</label>
+              <div class="input-suf"><input type="number" id="calc-lot-size" value="100" min="1"><span class="suf" id="calc-lot-unit">Grams</span></div>
+            </div>
+            <div class="form-group">
+              <label>Brokerage + Slippage (%)</label>
+              <div class="input-suf"><input type="number" id="calc-brokerage" value="0.05" min="0" step="0.01"><span class="suf">%</span></div>
+            </div>
+            <div class="calc-results">
+              <div class="cr-row"><span>Fair Parity Cost</span><span id="calc-total-fair">—</span></div>
+              <div class="cr-row"><span>MCX Position Value</span><span id="calc-total-mcx">—</span></div>
+              <div class="cr-row"><span>Brokerage Charges</span><span class="hl-red" id="calc-total-brokerage">—</span></div>
+              <div class="cr-divider"></div>
+              <div class="cr-row cr-net"><span>NET ARBITRAGE PROFIT</span><span class="net-val" id="calc-net-profit">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Market Grid -->
+      <div class="card grid-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-table-list"></i> All Commodities — Live Arbitrage Grid</div>
+          <span class="update-time" id="grid-last-update">Live via Yahoo Finance</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Commodity</th><th>Yahoo Ticker</th><th>COMEX Price</th><th>USD/INR</th>
+                <th>Base Landing</th><th>BCD Duty</th><th>Fair Value</th>
+                <th>MCX Price</th><th>Spread (₹)</th><th>Spread (%)</th><th>Signal</th>
+              </tr>
+            </thead>
+            <tbody id="market-grid-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB 2: FOREX FACTORY ===== -->
+  <div class="tab-panel" id="tab-forex">
+    <div class="ff-body">
+
+      <!-- FF Header Bar -->
+      <div class="ff-topbar">
+        <div class="ff-topbar-left">
+          <div class="ff-logo"><i class="fa-solid fa-calendar-days"></i> Forex Factory — Economic Calendar</div>
+          <span class="ff-status-badge" id="ff-status-badge">🔄 SYNCING</span>
+        </div>
+        <div class="ff-topbar-right">
+          <div class="ff-countdown-card">
+            <div class="fcc-label">⏱ Next High-Impact</div>
+            <div class="fcc-event" id="ff-next-event-name">Scanning…</div>
+            <div class="fcc-timer" id="ff-next-countdown">--:--:--</div>
+          </div>
+          <div class="ff-halt-alert" id="ff-halt-box" style="display:none">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="ff-halt-reason">AutoTrader HALTED</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="ff-filters">
+        <span class="filter-label">Filter:</span>
+        <button class="ff-filter-btn active" data-impact="ALL">All Events</button>
+        <button class="ff-filter-btn" data-impact="High">🔴 High</button>
+        <button class="ff-filter-btn" data-impact="Medium">🟡 Medium</button>
+        <button class="ff-filter-btn" data-impact="Low">⚪ Low</button>
+        <div class="ff-tag-row">
+          <span class="cmtag gold">🥇 Gold</span>
+          <span class="cmtag silver">🥈 Silver</span>
+          <span class="cmtag copper">⚡ Copper</span>
+          <span class="cmtag crude">🛢️ Crude</span>
+        </div>
+        <div class="ff-legend">
+          <span><span class="leg-dot soon"></span> &lt;15min</span>
+          <span><span class="leg-dot today"></span> Today</span>
+          <span><span class="leg-dot past"></span> Past</span>
+        </div>
+      </div>
+
+      <!-- FF Table -->
+      <div class="table-wrap">
+        <table class="data-table ff-table">
+          <thead>
+            <tr>
+              <th>Date & Time (IST)</th><th>Country</th><th>Event</th><th>Impact</th>
+              <th>Affects</th><th>Forecast</th><th>Previous</th><th>Actual</th>
+              <th>AutoTrader</th><th>Market Bias</th>
+            </tr>
+          </thead>
+          <tbody id="ff-tbody">
+            <tr class="empty-row"><td colspan="10">Loading Forex Factory economic calendar…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- FF Impact Guide -->
+      <div class="ff-guide-grid">
+        <div class="ff-guide-card high">
+          <div class="fg-icon">🔴</div>
+          <div class="fg-title">High Impact</div>
+          <div class="fg-desc">AutoTrader <strong>HALTED</strong> 15 min before and 10 min after release. Expect large price swings.</div>
+        </div>
+        <div class="ff-guide-card medium">
+          <div class="fg-icon">🟡</div>
+          <div class="fg-title">Medium Impact</div>
+          <div class="fg-desc">AutoTrader threshold <strong>widened ×1.5</strong> for 30 min. Reduces false signals during volatility.</div>
+        </div>
+        <div class="ff-guide-card low">
+          <div class="fg-icon">⚪</div>
+          <div class="fg-title">Low Impact</div>
+          <div class="fg-desc">Normal AutoTrader operation. Minor market noise possible near release.</div>
+        </div>
+        <div class="ff-guide-card info">
+          <div class="fg-icon">📡</div>
+          <div class="fg-title">Data Source</div>
+          <div class="fg-desc">Feed: <code>nfs.faireconomy.media</code> XML via 3-tier CORS proxy. Refreshed every 5 minutes.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB 3: AUTOTRADER ===== -->
+  <div class="tab-panel" id="tab-autotrader">
+    <div class="at-body">
+
+      <!-- AT Header -->
+      <div class="at-topbar">
+        <div class="at-topbar-left">
+          <div class="at-logo"><i class="fa-solid fa-robot"></i> AutoTrader Engine</div>
+          <span class="at-mode-pill">PAPER TRADING</span>
+        </div>
+        <div class="at-topbar-right">
+          <!-- Master Toggle -->
+          <label class="master-toggle" id="at-master-label">
+            <input type="checkbox" id="at-master-toggle">
+            <span class="mt-slider"></span>
+            <span class="mt-text" id="at-toggle-text">AUTOTRADER OFF</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- AT Stats Row -->
+      <div class="at-stats-row">
+        <div class="at-stat-card">
+          <span class="asc-label">Open Positions</span>
+          <span class="asc-val" id="at-open-count">0</span>
+        </div>
+        <div class="at-stat-card">
+          <span class="asc-label">Total Trades</span>
+          <span class="asc-val" id="at-total-count">0</span>
+        </div>
+        <div class="at-stat-card">
+          <span class="asc-label">Win Rate</span>
+          <span class="asc-val" id="at-win-rate">—</span>
+        </div>
+        <div class="at-stat-card green">
+          <span class="asc-label">Realized PnL</span>
+          <span class="asc-val" id="at-realized-pnl">₹0</span>
+        </div>
+        <div class="at-stat-card">
+          <span class="asc-label">Unrealized PnL</span>
+          <span class="asc-val" id="at-unrealized-pnl">₹0</span>
+        </div>
+        <div class="at-stat-card ff-halt-stat" id="at-ff-halt-indicator" style="display:none">
+          <span class="asc-label">Status</span>
+          <span class="asc-val hl-red">⛔ HALTED (FF Event)</span>
+        </div>
+      </div>
+
+      <!-- AT Configuration -->
+      <div class="card at-config-card">
+        <div class="card-header"><div class="card-title"><i class="fa-solid fa-gear"></i> AutoTrader Configuration</div></div>
+        <div class="at-config-grid">
+          <div class="at-cfg-item">
+            <label>Trigger Threshold (%)</label>
+            <div class="input-suf"><input type="number" id="at-trigger-pct" value="0.50" min="0.05" step="0.05"><span class="suf">%</span></div>
+            <small>Fire trade when |spread| exceeds this %</small>
+          </div>
+          <div class="at-cfg-item">
+            <label>Stop Loss (%)</label>
+            <div class="input-suf"><input type="number" id="at-stoploss-pct" value="1.50" min="0.1" step="0.1"><span class="suf">%</span></div>
+          </div>
+          <div class="at-cfg-item">
+            <label>Take Profit (%)</label>
+            <div class="input-suf"><input type="number" id="at-takeprofit-pct" value="0.80" min="0.1" step="0.1"><span class="suf">%</span></div>
+          </div>
+          <div class="at-cfg-item">
+            <label>Reversion Exit (%)</label>
+            <div class="input-suf"><input type="number" id="at-exit-reversion" value="0.10" min="0.01" step="0.01"><span class="suf">%</span></div>
+            <small>Close when spread reverts within this %</small>
+          </div>
+          <div class="at-cfg-item">
+            <label>Max Concurrent Positions</label>
+            <div class="input-suf"><input type="number" id="at-max-positions" value="4" min="1" max="16" step="1"><span class="suf">#</span></div>
+          </div>
+          <div class="at-cfg-item">
+            <label>Active Commodities</label>
+            <div class="cm-checks">
+              <label class="cm-chk gold"><input type="checkbox" id="at-en-gold" checked> GOLD</label>
+              <label class="cm-chk silver"><input type="checkbox" id="at-en-silver" checked> SILVER</label>
+              <label class="cm-chk copper"><input type="checkbox" id="at-en-copper" checked> COPPER</label>
+              <label class="cm-chk crude"><input type="checkbox" id="at-en-crude" checked> CRUDE</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Open Positions -->
+      <div class="card at-table-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-circle-dot hl-green"></i> Open Positions</div>
+          <span class="badge-cyan" id="at-open-badge">0 Open</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th><th>Commodity</th><th>Direction</th>
+                <th>Entry Price</th><th>Fair Value</th><th>Spread @ Entry</th>
+                <th>Current Price</th><th>Current Spread</th><th>Float PnL</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="at-open-tbody">
+              <tr class="empty-row"><td colspan="10">No open positions. AutoTrader is monitoring…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Trade Log -->
+      <div class="card at-table-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-list-check"></i> Trade Log</div>
+          <span class="badge-cyan" id="at-log-badge">0 Trades</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Closed At</th><th>Commodity</th><th>Direction</th>
+                <th>Entry</th><th>Exit</th><th>PnL (₹)</th><th>PnL (%)</th>
+                <th>Duration</th><th>Exit Reason</th>
+              </tr>
+            </thead>
+            <tbody id="at-log-tbody">
+              <tr class="empty-row"><td colspan="9">No completed trades yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB 4: CHATBOT ===== -->
+  <div class="tab-panel" id="tab-chatbot">
+    <div class="chat-full-layout">
+
+      <!-- Left: Chat Window -->
+      <div class="chat-main">
+        <div class="chat-top-bar">
+          <div class="chat-agent-info">
+            <div class="chat-avatar-lg"><i class="fa-solid fa-robot"></i></div>
+            <div>
+              <div class="chat-agent-name">Chatbot</div>
+              <div class="chat-agent-status"><span class="status-dot online"></span> Live Market Intelligence · Rule-Based AI</div>
+            </div>
+          </div>
+          <button class="btn btn-outline" id="btn-clear-chat"><i class="fa-solid fa-trash-can"></i> Clear</button>
+        </div>
+
+        <div class="chat-messages-full" id="chat-messages">
+          <div class="chat-msg bot-msg">
+            <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+            <div class="msg-content">
+              <div class="msg-bubble">
+                👋 Hello! I'm <strong>Chatbot</strong> — your live commodity market intelligence assistant.<br><br>
+                I have real-time access to <strong>Gold, Silver, Copper & Crude Oil</strong> prices, fair value calculations, import duty breakdowns, AutoTrader status, and Forex Factory economic events.<br><br>
+                Ask me anything about the markets! 👇
+              </div>
+              <span class="msg-time">Now</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" id="chat-input" class="chat-input-field" placeholder="Ask about prices, arbitrage, events, duties…" maxlength="300">
+          <button class="btn btn-primary chat-send-btn" id="chat-send-btn">
+            <i class="fa-solid fa-paper-plane"></i> Send
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Quick Actions + Context Panel -->
+      <div class="chat-sidebar">
+        <div class="cs-section">
+          <div class="cs-title">⚡ Quick Ask</div>
+          <div class="quick-grid">
+            <button class="quick-btn" data-q="best opportunity right now?">🏆 Best Trade Now</button>
+            <button class="quick-btn" data-q="show me all live prices">📊 All Live Prices</button>
+            <button class="quick-btn" data-q="is it safe to trade now">✅ Safe to Trade?</button>
+            <button class="quick-btn" data-q="show me high impact events">🔴 High Impact Events</button>
+            <button class="quick-btn" data-q="what is gold fair value breakdown?">🥇 Gold Breakdown</button>
+            <button class="quick-btn" data-q="what is silver arbitrage right now?">🥈 Silver Arbitrage</button>
+            <button class="quick-btn" data-q="what is copper arbitrage right now?">⚡ Copper Arbitrage</button>
+            <button class="quick-btn" data-q="what is crude oil arbitrage right now?">🛢️ Crude Arbitrage</button>
+            <button class="quick-btn" data-q="autotrader status">🤖 AutoTrader Status</button>
+            <button class="quick-btn" data-q="forex factory economic calendar">📅 FF Calendar</button>
+            <button class="quick-btn" data-q="explain arbitrage to me">📚 Explain Arbitrage</button>
+            <button class="quick-btn" data-q="what is USD INR rate">💱 USD/INR Rate</button>
+            <button class="quick-btn" data-q="what is 1 oz of gold in INR">⚖️ 1 oz Gold in ₹</button>
+            <button class="quick-btn" data-q="what happens if duty drops to 10%?">🧾 Duty Impact</button>
+          </div>
+        </div>
+
+        <div class="cs-section">
+          <div class="cs-title">📌 Live Snapshot</div>
+          <div class="live-snapshot" id="live-snapshot">
+            <div class="snap-row"><span class="snap-label">USD/INR</span><span class="snap-val" id="snap-usdinr">₹83.45</span></div>
+            <div class="snap-divider"></div>
+            <div class="snap-row"><span class="snap-label">Gold Spread</span><span class="snap-val" id="snap-gold-spread">—</span></div>
+            <div class="snap-row"><span class="snap-label">Silver Spread</span><span class="snap-val" id="snap-silver-spread">—</span></div>
+            <div class="snap-row"><span class="snap-label">Copper Spread</span><span class="snap-val" id="snap-copper-spread">—</span></div>
+            <div class="snap-row"><span class="snap-label">Crude Spread</span><span class="snap-val" id="snap-crude-spread">—</span></div>
+            <div class="snap-divider"></div>
+            <div class="snap-row"><span class="snap-label">AutoTrader</span><span class="snap-val" id="snap-at-status">OFF</span></div>
+            <div class="snap-row"><span class="snap-label">FF Next Event</span><span class="snap-val" id="snap-ff-next">—</span></div>
+            <div class="snap-row"><span class="snap-label">AT Halted?</span><span class="snap-val" id="snap-ff-halt">No</span></div>
+          </div>
+        </div>
+
+        <div class="cs-section">
+          <div class="cs-title">💡 Capabilities</div>
+          <div class="capability-list">
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> Live COMEX prices via Yahoo Finance</div>
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> Real-time MCX fair value with import duties</div>
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> Arbitrage spread & directional signals</div>
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> AutoTrader PnL, positions & log</div>
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> Forex Factory high-impact event calendar</div>
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> Safe-to-trade assessment (FF halt check)</div>
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> Unit conversions (oz → gram → INR)</div>
+            <div class="cap-item"><i class="fa-solid fa-check-circle hl-green"></i> Duty & tax scenario analysis</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app-container -->
+
+<!-- ===== SETTINGS DRAWER ===== -->
+<div class="settings-drawer" id="settings-drawer">
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <div class="drawer-content">
+    <div class="drawer-header">
+      <h3><i class="fa-solid fa-sliders"></i> Tax & Duty Configuration</h3>
+      <button class="btn-icon-close" id="btn-close-drawer"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="drawer-body">
+      <div class="cfg-section">
+        <h4><i class="fa-solid fa-receipt"></i> Custom Duty Rates</h4>
+        <div class="cfg-row">
+          <label>Gold / Silver BCD (%)</label>
+          <div class="slider-row">
+            <input type="range" id="slider-duty-pct" min="0" max="30" step="0.5" value="15.0">
+            <input type="number" id="input-duty-pct" min="0" max="100" step="0.1" value="15.0">
+          </div>
+          <small>Default 15.0% Basic Customs Duty</small>
+        </div>
+        <div class="cfg-row">
+          <label>Copper BCD (%)</label>
+          <div class="slider-row">
+            <input type="range" id="slider-copper-duty-pct" min="0" max="20" step="0.5" value="5.0">
+            <input type="number" id="input-copper-duty-pct" min="0" max="30" step="0.1" value="5.0">
+          </div>
+        </div>
+        <div class="cfg-row">
+          <label>Crude Oil BCD (%)</label>
+          <div class="slider-row">
+            <input type="range" id="slider-crude-duty-pct" min="0" max="10" step="0.5" value="2.5">
+            <input type="number" id="input-crude-duty-pct" min="0" max="15" step="0.1" value="2.5">
+          </div>
+        </div>
+        <div class="cfg-row">
+          <label>GST Rate — Physical Delivery (%)</label>
+          <div class="slider-row">
+            <input type="range" id="slider-gst-pct" min="0" max="28" step="1" value="3.0">
+            <input type="number" id="input-gst-pct" min="0" max="50" step="0.1" value="3.0">
+          </div>
+          <div class="toggle-row">
+            <input type="checkbox" id="chk-include-gst">
+            <label for="chk-include-gst">Include GST in Parity (Physical Delivery Mode)</label>
+          </div>
+        </div>
+        <div class="cfg-row">
+          <label>Bank Freight / Handling (%)</label>
+          <div class="slider-row">
+            <input type="range" id="slider-freight-pct" min="0" max="3" step="0.05" value="0.2">
+            <input type="number" id="input-freight-pct" min="0" max="10" step="0.05" value="0.2">
+          </div>
+        </div>
+      </div>
+      <div class="cfg-section">
+        <h4><i class="fa-solid fa-dollar-sign"></i> Exchange Rate</h4>
+        <div class="cfg-row">
+          <label>USD / INR Rate</label>
+          <div class="input-suf">
+            <input type="number" id="input-usdinr" min="50" max="120" step="0.01" value="83.45">
+            <span class="suf">INR</span>
+          </div>
+          <div class="toggle-row">
+            <input type="checkbox" id="chk-auto-usdinr" checked>
+            <label for="chk-auto-usdinr">Auto-sync via Yahoo Finance (INR=X)</label>
+          </div>
+        </div>
+      </div>
+      <div class="cfg-section">
+        <h4><i class="fa-solid fa-bell"></i> Alert Threshold</h4>
+        <div class="cfg-row">
+          <label>Minimum Alert Spread (%)</label>
+          <div class="input-suf">
+            <input type="number" id="input-alert-threshold" min="0.1" max="10" step="0.1" value="0.30">
+            <span class="suf">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn btn-outline" id="btn-reset-defaults">Reset Defaults</button>
+        <button class="btn btn-primary" id="btn-save-settings">Apply Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=20261028-1"></script>
+</body>
+</html>
